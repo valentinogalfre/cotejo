@@ -1,0 +1,10 @@
+node_modules/
+data/uploads/
+data/out/
+.qvac/
+*.log
+.env
+.DS_Store
+
+# notas de planificación local (no forman parte del proyecto)
+humanpending.md

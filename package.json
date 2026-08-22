@@ -1,0 +1,30 @@
+{
+  "name": "cotejo",
+  "version": "0.1.0",
+  "description": "Conciliador AFIP on-device: agente local que extrae facturas argentinas (OCR + LLM 1-4B via QVAC), se auto-verifica contra el QR de ARCA/AFIP y concilia contra el extracto bancario. 100% local, cero cloud.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.17"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "MOCK_LLM=1 node src/server.js",
+    "test": "node --test",
+    "make-test-data": "node scripts/make-test-data.js",
+    "prefetch-models": "node scripts/prefetch-models.js",
+    "bench": "node scripts/bench.js"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.65",
+    "@qvac/sdk": "^0.17.1",
+    "csv-parse": "^6.0.0",
+    "express": "^5.1.0",
+    "jsqr": "^1.4.0",
+    "multer": "^2.0.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.0",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.34.0"
+  },
+  "license": "MIT"
+}
