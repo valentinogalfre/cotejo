@@ -149,7 +149,14 @@ app.get('/api/export.csv', (req, res) => {
 });
 
 function exportCsv(c) {
-  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  // Anti CSV-injection: un valor que empieza con = + - @ (p.ej. un "emisor"
+  // leído por OCR de una factura maliciosa) se ejecutaría como fórmula al
+  // abrir el reporte en Excel/Sheets. Se neutraliza con apóstrofo.
+  const esc = (v) => {
+    let s = String(v ?? '');
+    if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+    return `"${s.replace(/"/g, '""')}"`;
+  };
   const rows = [
     ['resultado', 'archivo', 'emisor', 'cuit', 'fecha', 'comprobante', 'total', 'verificacion_qr', 'correcciones', 'explicacion'].join(';'),
   ];
@@ -165,7 +172,7 @@ function exportCsv(c) {
     ].join(';'));
   }
   for (const m of c.sinFactura) {
-    rows.push([esc('sin_factura'), '', '', '', esc(m.movimiento.fecha), '', esc(formatMoneyAR(m.movimiento.importe)), '', '', esc(m.explicacion)].join(';'));
+    rows.push([esc('sin_factura'), '', '', '', esc(m.movimiento.fecha), '', esc(formatMoneyAR(Math.abs(m.movimiento.importe))), '', '', esc(m.explicacion)].join(';'));
   }
   return '\ufeff' + rows.join('\r\n'); // BOM para que Excel abra UTF-8 bien
 }
