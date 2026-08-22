@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cotejo — Conciliador AFIP on-device</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <h1>COTEJO<span class="tm">·</span></h1>
+    <p class="tagline">Conciliador AFIP on-device — extracción auto-verificada contra el QR fiscal</p>
+  </div>
+  <div class="stamps">
+    <div class="stamp stamp-green" id="stamp-local">100% LOCAL<small>cero cloud · cero API keys</small></div>
+    <div class="stamp stamp-ink" id="stamp-modelo">
+      <span id="modelo-status">cargando modelos…</span>
+      <small id="modelo-detalle">QVAC SDK</small>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="steps">
+    <div class="card step" id="step-facturas">
+      <div class="step-head"><span class="stepnum">1</span><h2>Facturas</h2></div>
+      <label class="dropzone" id="dz-facturas">
+        <input type="file" id="input-facturas" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,image/*,application/pdf">
+        <strong>Soltá PDFs o fotos acá</strong>
+        <span>limpias, torcidas o arrugadas — da igual</span>
+      </label>
+      <ul class="filelist" id="lista-facturas"></ul>
+    </div>
+
+    <div class="card step" id="step-extracto">
+      <div class="step-head"><span class="stepnum">2</span><h2>Extracto bancario</h2></div>
+      <label class="dropzone" id="dz-extracto">
+        <input type="file" id="input-extracto" accept=".csv,text/csv">
+        <strong>CSV del banco</strong>
+        <span id="extracto-info">todavía sin cargar</span>
+      </label>
+    </div>
+
+    <div class="card step" id="step-conciliar">
+      <div class="step-head"><span class="stepnum">3</span><h2>Conciliar</h2></div>
+      <button id="btn-conciliar" class="bigbtn" disabled>COTEJAR TODO</button>
+      <div class="resumen" id="resumen" hidden>
+        <div class="r-item r-ok"><b id="r-conciliadas">0</b><span>conciliadas</span></div>
+        <div class="r-item r-warn"><b id="r-difieren">0</b><span>monto difiere</span></div>
+        <div class="r-item r-dup"><b id="r-duplicadas">0</b><span>duplicadas</span></div>
+        <div class="r-item r-bad"><b id="r-sinmatch">0</b><span>sin match</span></div>
+        <div class="r-item r-bad"><b id="r-sinfactura">0</b><span>débitos sin factura</span></div>
+      </div>
+      <a class="linkbtn" id="btn-export" href="/api/export.csv" hidden>⇩ Exportar reporte CSV</a>
+    </div>
+  </section>
+
+  <section class="card wide" id="panel-facturas" hidden>
+    <h2 class="ruled">Facturas procesadas <span class="count" id="count-facturas"></span></h2>
+    <div class="tablewrap">
+      <table id="tabla-facturas">
+        <thead>
+          <tr>
+            <th>Archivo</th><th>Emisor</th><th>Comprobante</th><th>Fecha</th>
+            <th class="num">Total</th><th>Verificación</th><th>Conciliación</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="grid2">
+    <div class="card" id="panel-log">
+      <h2 class="ruled">Registro de evidencia <span class="live" id="live-dot" hidden>● en vivo</span></h2>
+      <div class="tape" id="tape"><p class="tape-empty">Cada decisión del agente queda asentada acá, línea por línea.</p></div>
+    </div>
+    <div class="card" id="panel-alertas">
+      <h2 class="ruled">Para revisar a mano</h2>
+      <ul class="alertas" id="alertas"><li class="tape-empty">Sin pendientes por ahora.</li></ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Toda la inferencia corre en esta máquina vía <b>@qvac/sdk</b> (OCR ONNX + LLM llama.cpp). Ninguna factura sale de acá.</p>
+  <p class="metrics" id="metrics"></p>
+</footer>
+
+<div class="mockbanner" id="mockbanner" hidden>MODO MOCK — extracción por regex, solo desarrollo de UI. El demo real usa el LLM local.</div>
+
+<script src="app.js"></script>
+</body>
+</html>
