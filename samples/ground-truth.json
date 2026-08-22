@@ -72,5 +72,14 @@
     "total": 181000,
     "tieneQr": true,
     "duplicadaDe": "01-papelera-limpia.png"
+  },
+  "09-imprenta-digital.pdf": {
+    "cuit": "30689900115",
+    "fecha": "2026-08-20",
+    "tipoCmp": 6,
+    "ptoVta": 4,
+    "nroCmp": 7702,
+    "total": 132000,
+    "tieneQr": true
   }
 }

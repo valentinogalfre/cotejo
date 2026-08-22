@@ -204,6 +204,49 @@ async function main() {
   groundTruth['08-papelera.pdf'] = { ...groundTruth['01-papelera-limpia.png'], duplicadaDe: '01-papelera-limpia.png' };
   console.log('▸ 08-papelera.pdf');
 
+  // Y una factura PDF DIGITAL, con capa de texto de verdad (como los PDF que
+  // emite ARCA): ejercita el camino "texto embebido → sin OCR".
+  const digital = {
+    emisor: 'Imprenta Litoral S.R.L.', cuit: cuitFrom('3068990011'),
+    fecha: '2026-08-20', tipoCmp: 6, ptoVta: 4, nroCmp: 7702,
+    items: [['Folletería institucional x 5.000', 109090.91], ['IVA 21%', 22909.09]],
+    total: 132000.0, cae: '76321640051980',
+  };
+  const dpdf = await PDFDocument.create();
+  const dpage = dpdf.addPage([595, 842]); // A4
+  const font = await dpdf.embedFont('Helvetica');
+  const bold = await dpdf.embedFont('Helvetica-Bold');
+  const line = (text, y, opts = {}) => dpage.drawText(text, { x: opts.x ?? 50, y, size: opts.size ?? 11, font: opts.bold ? bold : font });
+  line(digital.emisor, 790, { size: 16, bold: true });
+  line(`CUIT: ${digital.cuit.slice(0, 2)}-${digital.cuit.slice(2, 10)}-${digital.cuit.slice(10)}`, 770);
+  line('IVA RESPONSABLE INSCRIPTO', 754);
+  line('FACTURA B   COD. 06', 790, { x: 380, bold: true });
+  line(`N° 0004-00007702`, 770, { x: 380 });
+  line(`Fecha: ${fechaAR(digital.fecha)}`, 754, { x: 380 });
+  line('Cliente: Consumidor Final', 710);
+  let y = 660;
+  for (const [desc, imp] of digital.items) {
+    line(desc, y);
+    line(`$ ${money(imp)}`, y, { x: 440 });
+    y -= 20;
+  }
+  line('TOTAL', y - 20, { size: 14, bold: true, x: 360 });
+  line(`$ ${money(digital.total)}`, y - 20, { size: 14, bold: true, x: 440 });
+  const dqrUrl = buildAfipQrUrl({
+    fecha: digital.fecha, cuit: digital.cuit, ptoVta: digital.ptoVta, tipoCmp: digital.tipoCmp,
+    nroCmp: digital.nroCmp, importe: digital.total, codAut: digital.cae,
+  });
+  const dqrPng = await QRCode.toBuffer(dqrUrl, { errorCorrectionLevel: 'M', margin: 2, width: 300 });
+  const dqrImage = await dpdf.embedPng(dqrPng);
+  dpage.drawImage(dqrImage, { x: 50, y: 380, width: 110, height: 110 });
+  line(`CAE N°: ${digital.cae}  -  Vto. CAE: 2026-08-30`, 360, { size: 9 });
+  await writeFile(path.join(OUT, '09-imprenta-digital.pdf'), Buffer.from(await dpdf.save()));
+  groundTruth['09-imprenta-digital.pdf'] = {
+    cuit: digital.cuit, fecha: digital.fecha, tipoCmp: digital.tipoCmp, ptoVta: digital.ptoVta,
+    nroCmp: digital.nroCmp, total: digital.total, tieneQr: true,
+  };
+  console.log('▸ 09-imprenta-digital.pdf');
+
   // Extracto bancario: 01 y 03 matchean exacto; 02 con monto distinto
   // (retención mal aplicada); 04 no aparece (sin_match); débito de Edesur
   // sin factura (sin_factura); 05 matchea exacto.
@@ -213,6 +256,7 @@ async function main() {
     `19/08/2026;PAGO PROVEEDOR FERRETERIA EL TORNILLO ${FACTURAS[1].cuit};220.500,00;;3.598.500,00`,
     '20/08/2026;TRANSF ESTUDIO RIVAS HONORARIOS;350.000,00;;3.248.500,00',
     '20/08/2026;DEBITO AUTOMATICO EDESUR;98.400,00;;3.150.100,00',
+    '20/08/2026;TRANSF IMPRENTA LITORAL SRL;132.000,00;;3.018.100,00',
     '21/08/2026;COMPRA TARJETA DEB KIOSCO 24 DE MARZO;47.500,00;;3.102.600,00',
     '21/08/2026;ACREDITACION VENTAS TARJETA;;1.250.000,00;4.352.600,00',
     '21/08/2026;PAGO FLETE DON RAMON;65.000,00;;4.287.600,00',

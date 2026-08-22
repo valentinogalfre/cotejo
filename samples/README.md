@@ -12,6 +12,7 @@ Generado con `npm run make-test-data` (determinístico). Los CUITs son sintétic
 | `06-recibo-sin-qr.png` | Recibo no fiscal sin QR → el sistema lo marca **sin verificar / revisar a mano**, no inventa |
 | `07-ferreteria-duplicada.png` | Mismo comprobante que 02 con otro nombre de archivo → **duplicada** |
 | `08-papelera.pdf` | PDF escaneado sin capa de texto (mismo comprobante que 01) → ejercita render PDF + OCR, y cae como **duplicada** si se sube junto a 01 |
+| `09-imprenta-digital.pdf` | PDF digital con capa de texto real (como los de ARCA) → ejercita el camino "texto embebido, sin OCR" → concilia |
 | `extracto-banco.csv` | Formato banco AR (`Fecha;Concepto;Débito;Crédito;Saldo`, importes es-AR). Incluye un débito de Edesur y un flete **sin factura** |
 | `ground-truth.json` | Valores reales de cada factura — lo usa `npm run bench` para medir tasa de acierto |
 
