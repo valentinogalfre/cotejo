@@ -79,6 +79,9 @@ app.get('/api/eventos', (req, res) => {
 app.post('/api/facturas', upload.array('files', 30), async (req, res) => {
   if (!req.files?.length) return res.status(400).json({ error: 'Sin archivos' });
   if (state.procesando) return res.status(409).json({ error: 'Ya hay un lote procesándose' });
+  if (!MOCK && !getQvacInfo().ready) {
+    return res.status(503).json({ error: 'Los modelos todavía están cargando — reintentá en unos segundos' });
+  }
 
   const queue = req.files.map((f) => ({
     id: `fac-${nextId++}`,
@@ -133,6 +136,9 @@ app.post('/api/conciliar', (req, res) => {
 });
 
 app.post('/api/reset', (req, res) => {
+  if (state.procesando) {
+    return res.status(409).json({ error: 'Hay un lote procesándose: esperá a que termine antes de resetear' });
+  }
   state.facturas = [];
   state.movimientos = [];
   state.extractoNombre = null;
@@ -178,6 +184,14 @@ function exportCsv(c) {
 }
 
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Errores de subida (p.ej. archivo > 25 MB) y cualquier otro imprevisto
+// vuelven como JSON, que es lo que la UI sabe mostrar.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const status = err instanceof multer.MulterError ? 413 : 500;
+  res.status(status).json({ error: err?.message ?? 'Error interno' });
+});
 
 const server = app.listen(PORT, '127.0.0.1', () => {
   console.log(`▸ Cotejo corriendo en http://127.0.0.1:${PORT} ${MOCK ? '(MOCK_LLM: sin modelos reales)' : ''}`);
