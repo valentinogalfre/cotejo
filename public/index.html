@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cotejo — Conciliador AFIP on-device</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧾</text></svg>">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -53,6 +54,7 @@
         <div class="r-item r-bad"><b id="r-sinfactura">0</b><span>débitos sin factura</span></div>
       </div>
       <a class="linkbtn" id="btn-export" href="/api/export.csv" hidden>⇩ Exportar reporte CSV</a>
+      <button class="resetbtn" id="btn-reset" type="button">reiniciar sesión</button>
     </div>
   </section>
 
@@ -89,6 +91,7 @@
 </footer>
 
 <div class="mockbanner" id="mockbanner" hidden>MODO MOCK — extracción por regex, solo desarrollo de UI. El demo real usa el LLM local.</div>
+<div class="toast" id="toast" hidden></div>
 
 <script src="app.js"></script>
 </body>

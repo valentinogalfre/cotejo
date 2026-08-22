@@ -22,6 +22,10 @@
 
 * { box-sizing: border-box; }
 
+/* El atributo hidden debe ganar SIEMPRE, aunque la clase del elemento
+   defina su propio display (flex/inline-block lo pisaban). */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background:
@@ -223,3 +227,26 @@ footer {
   background: var(--ambar); color: var(--card);
   padding: 8px 12px; border-radius: 6px; max-width: 340px;
 }
+
+/* toast estilo sello: avisos sin bloquear (nada de alert() en cámara) */
+.toast {
+  position: fixed; bottom: 16px; left: 16px; z-index: 20;
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  max-width: 420px; padding: 10px 14px;
+  border: 2.5px solid var(--tinta-roja); border-radius: 8px;
+  color: var(--tinta-roja); background: var(--tinta-roja-soft);
+  transform: rotate(-1deg);
+  animation: toastin .18s ease-out;
+}
+.toast.ok { border-color: var(--sello); color: var(--sello); background: var(--sello-soft); }
+@keyframes toastin { from { opacity: 0; transform: rotate(-1deg) translateY(8px); } }
+
+.resetbtn {
+  display: block; margin-top: 14px;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: none; border: none; cursor: pointer;
+  color: var(--ink-soft); text-decoration: underline dotted;
+  padding: 0;
+}
+.resetbtn:hover { color: var(--tinta-roja); }

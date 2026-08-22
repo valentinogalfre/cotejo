@@ -1,4 +1,7 @@
-/* Cotejo — front vanilla, sin build, sin dependencias. */
+/* Cotejo — front vanilla, sin build, sin dependencias.
+   Regla de sincronización: /api/estado es la verdad y se puede reconstruir
+   TODO desde ahí (resync). El SSE solo agrega en vivo; si se corta y vuelve,
+   resync() repone lo perdido. */
 const $ = (id) => document.getElementById(id);
 const state = { facturas: new Map(), extracto: false, conciliacion: null };
 
@@ -21,24 +24,67 @@ const fmtAR = (n) => n == null ? '—' :
   new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(n);
 const fmtFecha = (iso) => iso ? iso.split('-').reverse().join('/') : '—';
 
-// ---------- carga inicial + SSE ----------
-init();
-async function init() {
-  const r = await fetch('/api/estado').then((x) => x.json());
+// ---------- toasts (nada de alert(): no bloquean y se ven bien en cámara) --
+let toastTimer = null;
+function toast(msg, kind = 'error') {
+  const el = $('toast');
+  el.textContent = msg;
+  el.className = `toast ${kind}`;
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, 4200);
+}
+
+async function api(path, opts, okMsg) {
+  let r;
+  try {
+    r = await fetch(path, opts);
+  } catch {
+    toast('No pude hablar con el server local — ¿está corriendo npm start?');
+    return null;
+  }
+  let data = null;
+  try { data = await r.json(); } catch { /* respuestas no-JSON */ }
+  if (!r.ok) {
+    toast(data?.error ?? `Error ${r.status}`);
+    return null;
+  }
+  if (okMsg) toast(okMsg, 'ok');
+  return data ?? {};
+}
+
+// ---------- sincronización ----------
+async function resync() {
+  const r = await api('/api/estado');
+  if (!r) return;
   if (r.mock) $('mockbanner').hidden = false;
   pintarModelos(r.modelos);
-  for (const f of r.facturas) {
-    state.facturas.set(f.id, f);
-    for (const msg of f.evidence ?? []) appendTape(f.id, msg); // replay al recargar
-  }
-  if (r.extractoNombre) {
-    state.extracto = true;
-    $('extracto-info').textContent = `${r.extractoNombre} · ${r.movimientos} movimientos`;
-  }
+  state.facturas = new Map(r.facturas.map((f) => [f.id, f]));
+  state.extracto = Boolean(r.extractoNombre);
+  $('extracto-info').textContent = r.extractoNombre
+    ? `${r.extractoNombre} · ${r.movimientos} movimientos`
+    : 'todavía sin cargar';
   state.conciliacion = r.conciliacion;
+  $('live-dot').hidden = !r.procesando;
+  rebuildTape();
   render();
+}
 
+function rebuildTape() {
+  const tape = $('tape');
+  tape.innerHTML = '<p class="tape-empty">Cada decisión del agente queda asentada acá, línea por línea.</p>';
+  for (const f of state.facturas.values()) {
+    for (const msg of f.evidence ?? []) appendTape(f.id, msg);
+  }
+}
+
+// ---------- arranque + SSE ----------
+init();
+function init() {
   const es = new EventSource('/api/eventos');
+  // Corre en el open inicial y en cada reconexión: repone lo que el SSE
+  // haya perdido en el medio.
+  es.onopen = () => { resync(); };
   es.addEventListener('modelos', (e) => pintarModelos(JSON.parse(e.data)));
   es.addEventListener('factura', (e) => {
     const f = JSON.parse(e.data);
@@ -60,7 +106,16 @@ async function init() {
     $('extracto-info').textContent = `${d.nombre} · ${d.movimientos} movimientos`;
     render();
   });
-  es.addEventListener('conciliacion', () => refrescarConciliacion());
+  es.addEventListener('conciliacion', () => resync());
+  es.addEventListener('reset', () => {
+    state.facturas = new Map();
+    state.extracto = false;
+    state.conciliacion = null;
+    $('extracto-info').textContent = 'todavía sin cargar';
+    $('metrics').textContent = '';
+    rebuildTape();
+    render();
+  });
 }
 
 function pintarModelos(m) {
@@ -84,7 +139,7 @@ function pintarModelos(m) {
   }
 }
 
-// ---------- uploads ----------
+// ---------- acciones ----------
 wireDropzone('dz-facturas', 'input-facturas', (files) => subirFacturas(files));
 wireDropzone('dz-extracto', 'input-extracto', (files) => subirExtracto(files[0]));
 
@@ -104,37 +159,30 @@ function wireDropzone(zoneId, inputId, handler) {
 async function subirFacturas(files) {
   const fd = new FormData();
   for (const f of files) fd.append('files', f);
-  const r = await fetch('/api/facturas', { method: 'POST', body: fd });
-  if (!r.ok) alert((await r.json()).error ?? 'Error subiendo facturas');
+  await api('/api/facturas', { method: 'POST', body: fd });
 }
 
 async function subirExtracto(file) {
   const fd = new FormData();
   fd.append('file', file);
-  const r = await fetch('/api/extracto', { method: 'POST', body: fd });
-  const d = await r.json();
-  if (!r.ok) { alert(d.error ?? 'Error con el CSV'); return; }
+  await api('/api/extracto', { method: 'POST', body: fd });
 }
 
 $('btn-conciliar').addEventListener('click', async () => {
-  const r = await fetch('/api/conciliar', { method: 'POST' });
-  const d = await r.json();
-  if (!r.ok) { alert(d.error); return; }
+  const d = await api('/api/conciliar', { method: 'POST' });
+  if (!d) return;
   state.conciliacion = d;
   render();
 });
 
-async function refrescarConciliacion() {
-  const r = await fetch('/api/estado').then((x) => x.json());
-  state.conciliacion = r.conciliacion;
-  render();
-}
+$('btn-reset').addEventListener('click', async () => {
+  await api('/api/reset', { method: 'POST' }, 'Sesión reiniciada');
+});
 
 // ---------- render ----------
 function render() {
   const facturas = [...state.facturas.values()];
 
-  // lista breve del paso 1
   const ul = $('lista-facturas');
   ul.innerHTML = '';
   for (const f of facturas) {
@@ -145,7 +193,6 @@ function render() {
     ul.appendChild(li);
   }
 
-  // tabla principal
   const listas = facturas.filter((f) => f.estado !== 'procesando');
   $('panel-facturas').hidden = listas.length === 0;
   $('count-facturas').textContent = listas.length ? `(${listas.length})` : '';
@@ -174,7 +221,6 @@ function render() {
     tb.appendChild(tr);
   }
 
-  // resumen + alertas
   const c = state.conciliacion;
   $('resumen').hidden = !c;
   $('btn-export').hidden = !c;
@@ -185,12 +231,12 @@ function render() {
     $('r-sinmatch').textContent = c.resumen.sinMatch;
     $('r-sinfactura').textContent = c.resumen.movimientosSinFactura;
     pintarAlertas(c);
+  } else {
+    $('alertas').innerHTML = '<li class="tape-empty">Sin pendientes por ahora.</li>';
   }
 
-  // botón conciliar
   $('btn-conciliar').disabled = !(listas.length > 0 && state.extracto);
 
-  // métricas del pie
   const conTiempo = listas.filter((f) => f.timing?.totalMs);
   if (conTiempo.length) {
     const prom = Math.round(conTiempo.reduce((a, f) => a + f.timing.totalMs, 0) / conTiempo.length);
