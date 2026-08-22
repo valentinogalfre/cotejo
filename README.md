@@ -73,15 +73,23 @@ Flujo: arrastrá los archivos de `samples/` al paso 1, `samples/extracto-banco.c
 ## Evidencia, no vibes
 
 ```bash
-npm test              # 32 tests de contrato (QR fiscal, CUIT mod-11, matching, es-AR parsing)
+npm test              # 34 tests de contrato (QR fiscal, CUIT mod-11, matching, es-AR parsing)
 npm run bench         # pipeline completo × N corridas vs ground truth → tasa por campo + latencias
+RUNS=5 npm run bench  # más corridas
 ```
 
-<!-- RESULTADOS BENCH (completar con la corrida final):
-Modelo: Qwen3 4B Q4_K_M · Hardware: MacBook (Apple M5, 16 GB) · macOS 26
-- campo/tasa...
-- latencia p50/p90...
--->
+### Resultados medidos (3 corridas × 8 archivos, lote fijo de `samples/`, inputs no elegidos a dedo)
+
+| Métrica | Resultado |
+|---|---|
+| Campos correctos (cuit, fecha, total, ptoVta, nroCmp, tipoCmp) | **132/132 (100%)** |
+| QR fiscal decodificado (incluye foto torcida, ticket borroso y PDF escaneado) | 21/21 |
+| Alucinaciones del modelo atrapadas y corregidas por el cross-check del QR | **21** |
+| Latencia end-to-end por factura | p50 18,7 s · p90 19,9 s (OCR ~10-13 s · LLM ~5-7 s) |
+
+**Modelo:** `QWEN3_4B_INST_Q4_K_M` (Q4, ~2,4 GB) + `OCR_LATIN` (ONNX det+rec) · **Hardware:** MacBook Apple M5, 16 GB RAM, macOS 26 · **Throughput LLM:** ~25-40 tok/s.
+
+La lectura honesta de ese 100%: el modelo de 4B **se equivocó 21 veces** en 24 procesamientos — y el cross-check determinístico contra el QR fiscal atrapó y corrigió cada una, dejando el registro como evidencia. El recibo sin QR terminó marcado "no verificado / revisar a mano", que es la respuesta correcta. Las 3 corridas dieron resultados idénticos (`temp 0` + seed fija).
 
 ## Arquitectura
 
