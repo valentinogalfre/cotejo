@@ -55,7 +55,9 @@ for (let run = 1; run <= RUNS; run++) {
       if (ok) tally[f].ok++;
       else errs.push(`${f}: esperado ${expected[f]}, obtuvo ${got}`);
     }
-    console.log(`  ${errs.length === 0 ? '✓' : '✖'} ${file} [${r.status}] ${ms}ms${errs.length ? ' — ' + errs.join('; ') : ''}${r.corrections.length ? ` — ${r.corrections.length} corrección(es) del QR` : ''}`);
+    const desglose = `ocr ${r.timing.ocrMs ?? '—'}ms · llm ${r.timing.llmMs ?? '—'}ms` +
+      (r.timing.tokensPerSecond ? ` · ${r.timing.tokensPerSecond.toFixed(1)} tok/s` : '');
+    console.log(`  ${errs.length === 0 ? '✓' : '✖'} ${file} [${r.status}] ${ms}ms (${desglose})${errs.length ? ' — ' + errs.join('; ') : ''}${r.corrections.length ? ` — ${r.corrections.length} corrección(es) del QR` : ''}`);
   }
 }
 
