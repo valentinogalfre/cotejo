@@ -1,0 +1,76 @@
+{
+  "01-papelera-limpia.png": {
+    "cuit": "30712345671",
+    "fecha": "2026-08-18",
+    "tipoCmp": 6,
+    "ptoVta": 3,
+    "nroCmp": 8114,
+    "total": 181000,
+    "tieneQr": true
+  },
+  "02-ferreteria-limpia.png": {
+    "cuit": "30558877665",
+    "fecha": "2026-08-19",
+    "tipoCmp": 6,
+    "ptoVta": 12,
+    "nroCmp": 45023,
+    "total": 222000,
+    "tieneQr": true
+  },
+  "03-estudio-limpia.png": {
+    "cuit": "27334455667",
+    "fecha": "2026-08-20",
+    "tipoCmp": 11,
+    "ptoVta": 1,
+    "nroCmp": 992,
+    "total": 350000,
+    "tieneQr": true
+  },
+  "04-mayorista-foto.png": {
+    "cuit": "30607788991",
+    "fecha": "2026-08-19",
+    "tipoCmp": 1,
+    "ptoVta": 7,
+    "nroCmp": 120455,
+    "total": 503000,
+    "tieneQr": true
+  },
+  "05-ticket-borroso.png": {
+    "cuit": "20293642339",
+    "fecha": "2026-08-21",
+    "tipoCmp": 11,
+    "ptoVta": 2,
+    "nroCmp": 33871,
+    "total": 47500,
+    "tieneQr": true
+  },
+  "06-recibo-sin-qr.png": {
+    "cuit": null,
+    "fecha": "2026-08-20",
+    "tipoCmp": null,
+    "ptoVta": null,
+    "nroCmp": null,
+    "total": 65000,
+    "tieneQr": false
+  },
+  "07-ferreteria-duplicada.png": {
+    "cuit": "30558877665",
+    "fecha": "2026-08-19",
+    "tipoCmp": 6,
+    "ptoVta": 12,
+    "nroCmp": 45023,
+    "total": 222000,
+    "tieneQr": true,
+    "duplicadaDe": "02-ferreteria-limpia.png"
+  },
+  "08-papelera.pdf": {
+    "cuit": "30712345671",
+    "fecha": "2026-08-18",
+    "tipoCmp": 6,
+    "ptoVta": 3,
+    "nroCmp": 8114,
+    "total": 181000,
+    "tieneQr": true,
+    "duplicadaDe": "01-papelera-limpia.png"
+  }
+}
