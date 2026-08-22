@@ -54,11 +54,16 @@ export async function initQvac({ onProgress = () => {} } = {}) {
       modelSrc: OCR_LATIN,
       modelConfig: {
         langList: ['es', 'en'],
-        magRatio: 1.5,
-        defaultRotationAngles: [90, 180, 270],
-        contrastRetry: true,
+        // La imagen ya llega pre-escalada a 1200 px (src/pipeline.js), no
+        // hace falta que el OCR la vuelva a agrandar.
+        magRatio: 1.0,
+        // Sin escalera de rotaciones ni reintento de contraste: las facturas
+        // llegan derechas (sharp ya respeta el EXIF) y cada rotación extra
+        // multiplicaba el costo del OCR. El dato duro viene del QR igual.
+        defaultRotationAngles: [],
+        contrastRetry: false,
         lowConfidenceThreshold: 0.4,
-        recognizerBatchSize: 1,
+        recognizerBatchSize: 8,
       },
       onProgress: (p) => onProgress('ocr', p.percentage),
     });

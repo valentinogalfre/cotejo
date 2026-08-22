@@ -26,22 +26,13 @@ export const INVOICE_SCHEMA = {
     nroCmp: { type: ['integer', 'null'], description: 'Número de comprobante (después del guión)' },
     total: { type: ['number', 'null'], description: 'Importe total final en pesos' },
     moneda: { type: ['string', 'null'] },
-    items: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          descripcion: { type: 'string' },
-          importe: { type: ['number', 'null'] },
-        },
-        required: ['descripcion', 'importe'],
-        additionalProperties: false,
-      },
-    },
   },
-  required: ['emisor', 'cuit', 'fecha', 'tipoCmp', 'ptoVta', 'nroCmp', 'total', 'moneda', 'items'],
+  required: ['emisor', 'cuit', 'fecha', 'tipoCmp', 'ptoVta', 'nroCmp', 'total', 'moneda'],
   additionalProperties: false,
 };
+// Nota: no se piden los renglones (items) a propósito — la conciliación usa
+// solo la cabecera, y generar el detalle multiplicaba la latencia por factura
+// en un modelo de 4B sin aportar nada al matching.
 
 const SYSTEM_PROMPT = `Sos un extractor de datos de facturas argentinas. Recibís el texto OCR crudo de UNA factura (puede tener errores de lectura; los tramos marcados ⟨dudoso⟩ son poco confiables).
 
@@ -76,6 +67,7 @@ export async function extractInvoice(ocrText) {
       user,
       schema: INVOICE_SCHEMA,
       schemaName: 'factura',
+      maxTokens: 400,
     });
     lastStats = stats;
     if (!json) {
@@ -106,12 +98,6 @@ export function sanitize(raw) {
     nroCmp: intOrNull(raw.nroCmp),
     total: null,
     moneda: strOrNull(raw.moneda),
-    items: Array.isArray(raw.items)
-      ? raw.items
-          .filter((it) => it && typeof it.descripcion === 'string')
-          .map((it) => ({ descripcion: it.descripcion.slice(0, 200), importe: parseMoneyAR(it.importe) }))
-          .slice(0, 50)
-      : [],
   };
 
   const cuit = normalizeCuit(raw.cuit);

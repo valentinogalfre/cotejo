@@ -7,6 +7,7 @@
  *   4. LLM local estructura el texto (extract.js).
  *   5. crossCheck(): el QR corrige/verifica al modelo y deja evidencia.
  */
+import sharp from 'sharp';
 import { renderPdf, isPdf } from './pdf.js';
 import { scanQr } from './qr-scan.js';
 import { parseAfipQr, formatComprobante } from './afip-qr.js';
@@ -15,6 +16,18 @@ import { extractInvoice } from './extract.js';
 import { crossCheck } from './crosscheck.js';
 
 const MIN_EMBEDDED_TEXT = 80;
+const OCR_MAX_WIDTH = 1200;
+
+/**
+ * El costo del OCR escala con el área de la imagen y una factura a 1200 px
+ * de ancho conserva el texto perfectamente legible. El QR se escanea sobre
+ * la imagen original, así que esta reducción no le quita nada al dato duro.
+ */
+async function ocrSized(buffer) {
+  const meta = await sharp(buffer).metadata();
+  if ((meta.width ?? 0) <= OCR_MAX_WIDTH) return buffer;
+  return sharp(buffer).rotate().resize({ width: OCR_MAX_WIDTH }).png().toBuffer();
+}
 
 /**
  * @param {{ id: string, filename: string, buffer: Buffer }} file
@@ -67,7 +80,7 @@ export async function processInvoiceFile(file, log = () => {}) {
     ocrText = embeddedText;
     ocrSource = 'sin OCR (MOCK_LLM)';
   } else {
-    const o = await runOcr(images[0]);
+    const o = await runOcr(await ocrSized(images[0]));
     ocrText = o.text;
     ocrMs = o.ms;
     lowConfidence = o.lowConfidence;
