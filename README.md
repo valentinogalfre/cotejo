@@ -46,14 +46,12 @@ factura (PDF/foto) ──► render/decodificación
 | [OCR](https://docs.qvac.tether.io/ai-capabilities/ocr) | `OCR_LATIN` (ONNX det+rec, es/en) | texto crudo de la factura, con confianza por bloque |
 | [Text generation](https://docs.qvac.tether.io/ai-capabilities/text-generation) | `QWEN3_4B_INST_Q4_K_M` (llama.cpp, Q4) | extracción estructurada con `responseFormat: json_schema` |
 
-**Toda la integración con `@qvac/sdk` vive en un solo archivo: [`src/qvac.js`](src/qvac.js).**
+**Toda la integración con `@qvac/sdk` vive en un solo archivo: [`src/qvac.js`](src/qvac.js).** Permalinks directos a donde ocurre la inferencia:
 
-<!-- PERMALINKS (completar al pushear):
-- loadModel OCR+LLM: src/qvac.js líneas ~50-75
-- ocr(): src/qvac.js líneas ~88-110
-- completion() con json_schema: src/qvac.js líneas ~118-145
-- downloadAsset (offline-ready): src/qvac.js líneas ~160-170
--->
+- [`loadModel()` del OCR](https://github.com/valentinogalfre/cotejo/blob/main/src/qvac.js#L53-L64) y [del LLM](https://github.com/valentinogalfre/cotejo/blob/main/src/qvac.js#L68-L74)
+- [`ocr()` — lectura de la factura](https://github.com/valentinogalfre/cotejo/blob/main/src/qvac.js#L94)
+- [`completion()` con `responseFormat: json_schema`](https://github.com/valentinogalfre/cotejo/blob/main/src/qvac.js#L123-L136)
+- [`downloadAsset()` — pre-descarga para correr offline](https://github.com/valentinogalfre/cotejo/blob/main/src/qvac.js#L166-L169)
 
 ## Setup desde clone limpio
 
