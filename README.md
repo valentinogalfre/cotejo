@@ -105,3 +105,19 @@ La lectura honesta de ese 100%: el modelo de 4B **se equivocó 21 veces** en 24 
 ## Privacidad
 
 El server escucha solo en `127.0.0.1` y no hace ninguna request saliente. Con los modelos ya descargados, **todo funciona en modo avión** — así se graba el demo.
+
+## Flujo de trabajo
+
+| Rama | Environment (GitHub) | Uso |
+|---|---|---|
+| `develop` (default) | `staging` | Integración: acá entran fixes y features, por PR o push directo. |
+| `main` | `production` | Producción: solo recibe merges desde `develop`. |
+
+CI (`.github/workflows/ci.yml`) corre en cada push a `develop`/`main` y en cada PR. Para reproducirlo local:
+
+```bash
+npm ci
+npm test
+```
+
+**Promover a producción:** PR `develop → main` (o `git checkout main && git merge --ff-only develop && git push`).
